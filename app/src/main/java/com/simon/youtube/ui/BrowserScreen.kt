@@ -231,6 +231,12 @@ fun BrowserScreen() {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.databaseEnabled = true
+            // Rendu à la largeur réelle de l'écran : sans ces deux réglages, le
+            // WebView compose la page à la largeur d'un bureau (~980 px) puis la
+            // découpe, ce qui produit des bandes grises et du texte tronqué
+            // (la page de connexion ou le bandeau d'historique devenait illisible).
+            settings.useWideViewPort = true
+            settings.loadWithOverviewMode = true
             settings.userAgentString = USER_AGENT_MOBILE
             // Aucune JavascriptInterface : le contenu distant ne doit jamais
             // pouvoir appeler du code natif.
