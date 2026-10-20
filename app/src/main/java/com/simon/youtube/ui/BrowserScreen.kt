@@ -399,8 +399,8 @@ fun BrowserScreen() {
                 factory = { webView },
                 modifier = Modifier
                     .fillMaxSize()
-                    .onSizeChanged { largeur, hauteur ->
-                        if (largeur > 0 && hauteur > 0) tailleConnue = true
+                    .onSizeChanged { taille ->
+                        if (taille.width > 0 && taille.height > 0) tailleConnue = true
                     }
             )
 
