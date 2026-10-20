@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Le kiosque affiche un site distant : sans INTERNET, le WebView reste blanc. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Android 11+ : déclare NewPipe pour que l'intention explicite vers
+         org.schabi.newpipe reste résolvable et que l'échec soit détectable. -->
+    <queries>
+        <package android:name="org.schabi.newpipe" />
+    </queries>
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.YouTube">
+
+        <!-- Activité unique : le WebView contient toute la navigation du site.
+             configChanges évite de recréer le WebView (donc de perdre la page)
+             au pivotement ou à l'ouverture du clavier. -->
+        <activity
+            android:name=".MainActivity"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|keyboard|uiMode"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.YouTube"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>
