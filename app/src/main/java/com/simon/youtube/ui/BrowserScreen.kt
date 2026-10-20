@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.SystemClock
+import android.view.View
 import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
@@ -26,12 +27,15 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -221,6 +225,12 @@ fun BrowserScreen() {
     val etatDrawer = rememberDrawerState(initialValue = DrawerValue.Closed)
     val navigation = remember { EtatNavigation() }
 
+    // Vrai une fois que le WebView a reçu sa taille réelle (> 0). Charger avant
+    // donne un viewport de hauteur nulle ou par défaut : YouTube rend alors sa
+    // feuille « historique désactivé » en position:fixed à mi-écran, le texte
+    // coupé par une bande grise. On attend donc la mesure réelle.
+    var tailleConnue by remember { mutableStateOf(false) }
+
     // Lu par les rappels du WebView pour ramener la page sur l'accueil.
     SideEffect {
         navigation.urlAccueil = etat.urlAccueil.ifBlank { URL_ACCUEIL_PAR_DEFAUT }
@@ -247,6 +257,15 @@ fun BrowserScreen() {
             settings.displayZoomControls = false
             settings.textZoom = 100
             settings.userAgentString = USER_AGENT_MOBILE
+
+            // Rendu logiciel au lieu de l'accélération matérielle. Le voile
+            // (scrim) et les feuilles « position: fixed » de YouTube sont des
+            // calques GPU : avec l'accélération matérielle, la composition les
+            // déplace à mi-écran et produit une bande grise translucide qui
+            // coupe le texte. En rendu logiciel, chaque élément est composé à
+            // sa place réelle. Coût : un peu de CPU, sans conséquence ici car
+            // les vidéos s'ouvrent dans NewPipe, jamais dans le WebView.
+            setLayerType(View.LAYER_TYPE_SOFTWARE, null)
             // Aucune JavascriptInterface : le contenu distant ne doit jamais
             // pouvoir appeler du code natif.
 
@@ -319,7 +338,9 @@ fun BrowserScreen() {
     }
 
     // Chargement (et rechargement si l'URL d'accueil change) hors de la composition.
-    LaunchedEffect(webView, etat.urlAccueil) {
+    // Différé jusqu'à la mesure réelle du WebView : voir `tailleConnue`.
+    LaunchedEffect(webView, etat.urlAccueil, tailleConnue) {
+        if (!tailleConnue) return@LaunchedEffect
         val cible = etat.urlAccueil.ifBlank { URL_ACCUEIL_PAR_DEFAUT }
         if (navigation.urlAppliquee != cible) {
             navigation.urlAppliquee = cible
@@ -376,7 +397,11 @@ fun BrowserScreen() {
         ) {
             AndroidView(
                 factory = { webView },
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .onSizeChanged { largeur, hauteur ->
+                        if (largeur > 0 && hauteur > 0) tailleConnue = true
+                    }
             )
 
             PoigneeReglages(
