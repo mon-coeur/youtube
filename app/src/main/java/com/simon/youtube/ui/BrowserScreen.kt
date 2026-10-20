@@ -231,12 +231,21 @@ fun BrowserScreen() {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.databaseEnabled = true
-            // Rendu à la largeur réelle de l'écran : sans ces deux réglages, le
-            // WebView compose la page à la largeur d'un bureau (~980 px) puis la
-            // découpe, ce qui produit des bandes grises et du texte tronqué
-            // (la page de connexion ou le bandeau d'historique devenait illisible).
+            // Largeur réelle de l'écran : le WebView honore la balise viewport de
+            // YouTube mobile au lieu de composer à ~980 px (largeur de bureau).
             settings.useWideViewPort = true
-            settings.loadWithOverviewMode = true
+            // PAS d'« overview mode » : ce zoom arrière élargit le viewport de mise
+            // en page au-delà de l'écran et déplace les éléments en position fixe
+            // (la feuille « Votre historique YouTube est désactivé », ancrée en bas,
+            // et son voile). Résultat : bande grise à mi-écran et moitié basse
+            // voilée. Échelle fixée à 1:1.
+            settings.loadWithOverviewMode = false
+            // Kiosque : aucun zoom (pincement ou boutons), qui fausserait le rendu
+            // de la même façon.
+            settings.setSupportZoom(false)
+            settings.builtInZoomControls = false
+            settings.displayZoomControls = false
+            settings.textZoom = 100
             settings.userAgentString = USER_AGENT_MOBILE
             // Aucune JavascriptInterface : le contenu distant ne doit jamais
             // pouvoir appeler du code natif.
